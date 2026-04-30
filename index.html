@@ -1,4 +1,222 @@
-<script>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://www.google.com/recaptcha/api.js"></script>
+  
+  <style>
+    /* フォーム全体(内側余白, 角を丸く, グレーの枠線, 白の背景色) */
+    .form-card {
+      padding: 28px;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+
+    /* フォームのh2クラス(タイトルの下に余白, 黒の文字色, 文字サイズ) */
+    .form-card h2 {
+      margin: 0 0 12px;
+      color: #111827;
+      font-size: 24px;
+    }
+
+    /* エラーメッセージ用(初期非表示, 外側余白, 内側余白, 角を丸く, 薄い赤の枠線, 薄い赤の背景色, 濃い赤の文字色, 文字サイズ) */
+    .w2c-error {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #fecaca;
+      background: #fff1f2;
+      color: #b91c1c;
+      font-size: 14px;
+    }
+
+    /* 送信完了メッセージ用(初期非表示, 外側余白, 内側余白, 角を丸く, 薄い緑の枠線, 薄い緑の背景色, 濃い緑の文字色, 文字サイズ) */
+    .w2c-thanks {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: 14px;
+    }
+
+    /* 入力項目のまとまり(各入力ブロックの下に余白) */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    /* ラベルと入力欄の間に改行) */
+    .form-group label {
+      display: block;
+    }
+
+    /* 必須を示す※用左に余白, 赤の文字色) */
+    .required {
+      margin-left: 4px;
+      color: #dc2626;
+    }
+
+    /* 補足説明のテキスト用(上側余白, グレーの文字色, 文字サイズ) */
+    .form-note {
+      margin-top: 10px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    /* reCAPTCHA本体(上側余白) */
+    .recaptcha-wrapper {
+       margin-top: 10px;
+    }
+
+    /* reCAPTCHAのエラーメッセージ用(下側余白, 赤の文字色, エラーメッセージ, 表示判定) */
+    .recaptcha-error {
+       margin-bottom: 6px;
+       color: red;
+       font-size: 13px;
+       display: none;
+    }
+
+    /* reCAPTCHAでエラー発生時の囲みの大きさ */
+    .recaptcha-box {
+       display: inline-block;
+    }
+
+    /* エラー発生時の囲み本体(内側余白, 枠の角を丸く, 赤枠実線) */
+    .recaptcha-box.error {
+       padding: 6px;
+       border-radius: 4px;
+       border: 2px solid red;
+    }
+
+    /* ボタン標準(上側余白, 内側余白, 背景色, 文字色, 枠の表示, 枠の角を丸く, マウス載せたときの表示) */
+    .submit-btn {
+       margin-top: 16px;
+       padding: 10px 16px;
+       background: #0070d2;
+       color : white;
+       border: none;
+       border-radius: 4px;
+       cursor: pointer;
+    }
+
+    /* ボタンカスタム(マウス載せたときの背景色) */
+    .submit-btn:hover {
+       background: #005bb5;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="form-card">
+    <h2>フォームからのお問い合わせ</h2>
+
+    <!-- エラーメッセージ -->
+    <div id="formError" class="w2c-error">
+       入力内容をご確認ください。
+    </div>
+
+    <!-- 送信完了メッセージ -->
+    <div id="thanksMessage" class="w2c-thanks">
+       お問い合わせを受け付けました。担当者よりご連絡いたします。
+    </div>
+
+    <!-- 画面遷移を見せないための hidden iframe -->
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
+    <!-- フォーム開始 -->
+    <form id="webToCaseForm" action="https://fun-speed-4168--dev01.sandbox.my.salesforce.com/servlet/servlet.WebToCase?encoding=UTF-8&orgId=00DBW000003oIKz" method="POST" target="hidden_iframe" onsubmit="return validateRecaptcha();">
+       <input type="hidden" name="captcha_settings" value='{"keyname":"developer", "fallback":"true", "orgid":"00DBW000003oIKz", "ts":""}'>
+       <!-- Salesforce Web-to-Case 必須 -->
+       <input type="hidden" name="orgid" value="00DBW000003oIKz" />
+       <input type="hidden" name="retURL" value="about:blank" />
+
+       <!-- disabled selectedで初期選択肢を再度選択できないように -->
+       <div class="form-group">
+          <label for="type">ご相談の種類<span class="required" >※</span></label>
+          <select id="type" name="type" required>
+             <option value="" disabled selected>選択してください</option>
+             <option value="まず相談したい">まず相談したい</option>
+             <option value="詳しい料金を知りたい">詳しい料金を知りたい</option>
+             <option value="デモが見たい">デモが見たい</option>
+             <option value="事例が知りたい">事例が知りたい</option>
+             <option value="資料が欲しい">資料が欲しい</option>
+             <option value="その他">その他</option>
+          </select>
+       </div>
+
+       <!-- 非表示にする -->
+       <input type="hidden" id="subject" name="subject">
+
+       <div class="form-group">
+          <label for="company">会社名<span class="required">※</span></label>
+          <input id="company" name="company" maxlength="80" type="text" required />
+       </div>
+
+       <div class="form-group">
+          <label for="name">お名前<span class="required">※</span></label>
+          <input id="name" name="name" maxlength="80" type="text" required />
+       </div>
+
+       <div class="form-group">
+          <label for="email">メールアドレス<span class="required">※</span></label>
+          <input id="email" name="email" maxlength="80" type="email" required />
+       </div>
+
+       <div class="form-group">
+          <label for="phone">電話番号(携帯を推奨)<span class="required">※</span></label>
+          <input id="phone" name="phone" type="tel" maxlength="20" required>
+       </div>
+
+       <!-- disabled selectedで初期選択肢を再度選択できないように -->
+       <div class="form-group">
+          <label for="00NBW000004ncEj">従業員数<span class="required" >※</span></label>
+          <select id="00NBW000004ncEj" name="00NBW000004ncEj" required>
+             <option value="" disabled selected>選択してください</option>
+             <option value="100～199名">100～199名</option>
+             <option value="200～299名">200～299名</option>
+             <option value="300～499名">300～499名</option>
+             <option value="500～999名">500～999名</option>
+             <option value="1000名以上">1000名以上</option>
+          </select>
+       </div>
+
+       <div class="form-group">
+          <label for="00NBW000004ncGL">当社を知ったきっかけ<span class="required">※</span></label>
+          <textarea id="00NBW000004ncGL" name="00NBW000004ncGL" required></textarea>
+       </div>
+
+       <div class="form-group">
+          <label for="description">お問い合わせ内容<span class="required">※</span></label>
+          <textarea id="description" name="description" required></textarea>
+       </div>
+
+       <div class="recaptcha-wrapper">
+          <div id="recaptcha-error" class="recaptcha-error">
+             reCAPTCHAの確認が必要です
+          </div>
+
+          <div id="recaptcha-container" class="recaptcha-box">
+             <div class="g-recaptcha" data-sitekey="6LeRStEsAAAAAMroC_FfRYYtQzJ_GxKByNOlJdEe"></div>
+          </div>
+       </div>
+
+       <button type="submit" id="submitButton" class="submit-btn">送信する</button>
+
+       <!-- 補足説明のテキスト -->
+       <div class="form-note">
+          ご入力いただいた内容は、お問い合わせ対応のために利用いたします。
+       </div>
+
+     </form>
+  </div>
+
+  <script>
      // Salesforce用タイムスタンプ
      document.addEventListener('DOMContentLoaded', function () {
         // 500msごとに実行
@@ -100,12 +318,10 @@
            subjectInput.value = subjectMap[typeSelect.value] || "【お問い合わせ】";
         });
 
-        // エラー表示＋スクロール共通関数
         function showErrorAndScroll(message, target) {
            formError.textContent = message;
            formError.style.display = 'block';
 
-           // エラー表示位置へスクロール
            if (target) {
               target.scrollIntoView({
                  behavior: 'smooth',
@@ -192,3 +408,6 @@
       });
      })();
   </script>
+
+</body>
+</html>
