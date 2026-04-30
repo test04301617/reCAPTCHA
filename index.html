@@ -335,8 +335,30 @@
            }
         }
 
+        function showFieldError(el, message) {
+           const old = el.parentNode.querySelector('.field-error');
+           if (old) old.remove();
+
+           const error = document.createElement('div');
+           error.className = 'field-error';
+           error.style.color = 'red';
+           error.style.fontSize = '13px';
+           error.style.marginTop = '4px';
+           error.textContent = message;
+
+           el.parentNode.appendChild(error);
+
+           el.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+           });
+        }
+
         // 送信ボタン押下で実行
         form.addEventListener('submit', function (e) {
+
+           // フィールドエラー初期化
+           document.querySelectorAll('.field-error').forEach(e => e.remove());
 
            if (!validateRecaptcha()) {
               e.preventDefault();
@@ -365,7 +387,8 @@
            // ③電話番号は+・数字・ハイフン・カッコ・スペースのみ
            if (!/^\+?[0-9\-() ]{7,20}$/.test(phone.value)) {
               e.preventDefault();
-              showErrorAndScroll('電話番号の形式が不正です', phone);
+              showFieldError(phone, '電話番号の形式が不正です');
+              showErrorAndScroll('入力内容をご確認ください。', phone);
               return;
            }
 
@@ -375,7 +398,8 @@
               if (el.type === 'email') continue;
               if (el.value && /(https?:\/\/|www\.|[a-z0-9.-]+\.[a-z]{2,})/i.test(el.value)) {
                  e.preventDefault();
-                 showErrorAndScroll('URLは入力できません', el);
+                 showFieldError(el, 'URLは入力できません');
+                 showErrorAndScroll('入力内容をご確認ください。', el);
                  return;
               }
            }
