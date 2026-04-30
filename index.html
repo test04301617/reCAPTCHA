@@ -130,7 +130,7 @@
     <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
     <!-- フォーム開始 -->
-    <form id="webToCaseForm" action="https://fun-speed-4168--dev01.sandbox.my.salesforce.com/servlet/servlet.WebToCase?encoding=UTF-8&orgId=00DBW000003oIKz" method="POST">
+    <form id="webToCaseForm" action="https://fun-speed-4168--dev01.sandbox.my.salesforce.com/servlet/servlet.WebToCase?encoding=UTF-8&orgId=00DBW000003oIKz" method="POST" target="hidden_iframe">
        <input type="hidden" name="captcha_settings" value='{"keyname":"myreCAPTCHA","fallback":"true","orgId":"00DBW000003oIKz","ts":""}'>
        <!-- Salesforce Web-to-Case 必須 -->
        <input type="hidden" name="orgid" value="00DBW000003oIKz" />
@@ -152,7 +152,7 @@
 
        <!-- 非表示にする -->
        <input type="hidden" id="subject" name="subject">
-       <input type="hidden" name="origin" value="Web" />
+       <input type="hidden" name="status" value="新規" />
 
        <div class="form-group">
           <label for="company">会社名<span class="required">※</span></label>
@@ -218,39 +218,15 @@
   </div>
 
   <script>
-     // Salesforce用タイムスタンプ
-     document.addEventListener('DOMContentLoaded', function () {
-        // 500msごとに実行
-        const INTERVAL = 500;
-
-        function updateTimestamp() {
-           // reCAPTCHAのレスポンス（ユーザーがチェックしたかどうか）
-           const response = document.getElementById('g-recaptcha-response');
-           // Salesforceのcaptcha_settings(hidden項目)
-           const captchaSettings = document.querySelector('input[name="captcha_settings"]');
-
-           // 要素が存在しない場合は処理しない
-           if (!response || !captchaSettings) return;
-
-           // reCAPTCHA未入力時のみタイムスタンプ更新
-           if (!response.value) {
-              try {
-                 // JSONとしてパース
-                 const settings = JSON.parse(captchaSettings.value);
-                 // 現在時刻（ミリ秒）をtsにセット
-                 settings.ts = new Date().getTime();
-                 // 再度hidden項目に書き戻す
-                 captchaSettings.value = JSON.stringify(settings);
-              } catch (e) {
-                 // JSON形式が壊れていた場合のエラー
-                 console.error('captcha_settings parse error:', e);
-              }
-           }
-        }
-
-        // 定期実行開始
-        setInterval(updateTimestamp, INTERVAL);
-     });
+     function timestamp() { 
+        var response = document.getElementById("g-recaptcha-response"); 
+        if (response == null || response.value.trim() == "") {
+           var elems = JSON.parse(document.getElementsByName("captcha_settings")[0].value);
+           elems["ts"] = JSON.stringify(new Date().getTime());
+           document.getElementsByName("captcha_settings")[0].value = JSON.stringify(elems);
+        } 
+     }
+     setInterval(timestamp, 500);
 
      // reCAPTCHAバリデーション処理
      function validateRecaptcha() {
