@@ -114,7 +114,7 @@
 
 <body>
   <div class="form-card">
-    <h2>フォームからのお問い合わせ２</h2>
+    <h2>フォームからのお問い合わせ3</h2>
 
     <!-- エラーメッセージ -->
     <div id="formError" class="w2c-error">
@@ -372,7 +372,7 @@
            }
 
            // ④メール項目以外はURLのような文字列を禁止し、異常があれば送信停止、エラーを表示
-           const inputs = form.querySelectorAll('input, textarea');
+           const inputs = form.querySelectorAll('input[type="text"], textarea');
            for (let el of inputs) {
               if (el.type === 'email') continue;
               if (el.value && /(https?:\/\/|www\.|[a-z0-9.-]+\.[a-z]{2,})/i.test(el.value)) {
