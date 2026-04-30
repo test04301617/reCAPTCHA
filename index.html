@@ -337,10 +337,10 @@
            // フィールドエラー初期化
            document.querySelectorAll('.field-error').forEach(e => e.remove());
 
-           if (!validateRecaptcha()) {
-              e.preventDefault();
-              return;
-           }
+           //if (!validateRecaptcha()) {
+           //   e.preventDefault();
+             // return;
+           //}
 
            //前回のエラーを消す
            formError.style.display = 'none';
